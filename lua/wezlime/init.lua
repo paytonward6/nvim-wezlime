@@ -1,10 +1,13 @@
 local M = {}
 
+M.current_pane_id = nil
+
 local wezterm_list_clients = function()
     local output = vim.fn.system("wezterm cli list-clients --format json")
     local json = vim.json.decode(output)
     return json
 end
+
 
 local wezterm_pane_right = function()
     local output = vim.fn.system("wezterm cli get-pane-direction right")
@@ -14,6 +17,16 @@ local wezterm_pane_right = function()
     end
     return output
 end
+
+
+local target_pane = function(opts)
+    if M.current_pane_id == nil or opts.reload then
+        M.current_pane_id = wezterm_pane_right()
+    else
+        return M.current_pane_id
+    end
+end
+
 
 local wezterm_send_text = function(pane_id, text)
     local command = {"wezterm", "cli", "send-text", "--pane-id", pane_id}
@@ -103,27 +116,60 @@ end
 
 local send = function(lines)
     local text = vim.fn.join(lines, "\n")
-    wezterm_send_text(wezterm_pane_right(), text)
-    wezterm_send_text(wezterm_pane_right(), "\n")
+    wezterm_send_text(target_pane({reload = false}), text)
+    wezterm_send_text(target_pane({reload = false}), "\n")
 end
 
-M.wezlime = function(args)
+local wezlime_reload_pane = function()
+    target_pane({reload = true})
+end
+
+local wezlime_send = function(context)
     local text = nil
-    if args.range == 0 then
+    if context.range == 0 then
         text = M.get_cur_block()
-    elseif args.range > 0 then
-        text = vim.api.nvim_buf_get_lines(0, args.line1 - 1, args.line2, false)
+    elseif context.range > 0 then
+        text = vim.api.nvim_buf_get_lines(0, context.line1 - 1, context.line2, false)
     end
 
     if text ~= nil then
         send(text)
+        if vim.v.shell_error == 2 then
+            -- 2 means no pane has such ID
+            -- reload and try again...
+            wezlime_reload_pane()
+            send(text)
+        else
+            error("Error writing text to Wezterm pane " .. M.current_pane_id)
+        end
     else
         vim.print("No text to send to pane")
     end
 end
 
+
+local get_pane = function()
+    vim.print(M.current_pane_id)
+end
+
+
+M.wezlime = function(context)
+    local args = {}
+    for substring in string.gmatch(context.args, "%S+") do
+       table.insert(args, substring)
+    end
+
+    if args[1] == "send" then
+        wezlime_send(context)
+    elseif args[1] == "reload_pane" then
+        wezlime_reload_pane()
+    elseif args[1] == "get_pane" then
+        get_pane()
+    end
+end
+
 M.setup = function()
-    vim.api.nvim_create_user_command("Wezlime", M.wezlime, {nargs = 0, range = true})
+    vim.api.nvim_create_user_command("Wezlime", M.wezlime, {nargs = 1, range = true})
 end
 
 
