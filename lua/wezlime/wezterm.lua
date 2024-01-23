@@ -45,9 +45,8 @@ end
 function M:target_pane(opts)
     if self.current_pane_id == nil or opts.reload then
         self.current_pane_id = self:wezterm_pane()
-    else
-        return self.current_pane_id
     end
+    return self.current_pane_id
 end
 
 function M:set_pane(id)
@@ -57,6 +56,7 @@ function M:set_pane(id)
     else
         error("Wezterm pane ID must be a number")
     end
+    return self.current_pane_id
 end
 
 M.send_text = function(pane_id, text)
@@ -72,7 +72,7 @@ function M:send(lines)
 end
 
 function M:reload_pane()
-    self:target_pane({reload = true})
+    return self:target_pane({reload = true})
 end
 
 local current_pane_id = function()

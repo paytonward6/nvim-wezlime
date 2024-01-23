@@ -38,11 +38,11 @@ M.wezlime = function(context)
     if args[1] == "send" then
         wezlime_send(context)
     elseif args[1] == "reload_pane" then
-        wezterm:reload_pane()
+        vim.print(wezterm:reload_pane())
     elseif args[1] == "get_pane" then
         vim.print(wezterm:get_pane())
     elseif args[1] == "set_pane" then
-        wezterm:set_pane(args[2])
+        vim.print(wezterm:set_pane(args[2]))
     end
 end
 
