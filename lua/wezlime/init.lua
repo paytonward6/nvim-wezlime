@@ -139,7 +139,7 @@ local wezlime_send = function(context)
             -- reload and try again...
             wezlime_reload_pane()
             send(text)
-        else
+        elseif vim.v.shell_error > 0 then
             error("Error writing text to Wezterm pane " .. M.current_pane_id)
         end
     else
