@@ -122,6 +122,9 @@ M.wezlime = function(args)
     end
 end
 
-vim.api.nvim_create_user_command("Wezlime", M.wezlime, {nargs = 0, range = true})
+M.setup = function()
+    vim.api.nvim_create_user_command("Wezlime", M.wezlime, {nargs = 0, range = true})
+end
+
 
 return M
