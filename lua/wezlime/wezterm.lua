@@ -2,6 +2,27 @@ local M = {}
 
 M.current_pane_id = nil
 
+local validate_direction = function(direction)
+    local directions = {"up", "down", "left", "right", "next", "prev"}
+
+    for _, d in ipairs(directions) do
+        if string.lower(direction) == d then
+            return direction
+        end
+    end
+    error("Invalid Wezterm direction: " .. direction)
+end
+
+function M:setup(opts)
+    if not self.config then
+        self.config = {}
+    end
+
+    local direction = opts.relative_direction or "right"
+    self.config.relative_direction = validate_direction(direction)
+
+end
+
 function M:get_pane()
     vim.print(self.current_pane_id)
 end
@@ -12,18 +33,18 @@ local wezterm_list_clients = function()
     return json
 end
 
-local wezterm_pane_right = function()
-    local output = vim.fn.system("wezterm cli get-pane-direction right")
+function M:wezterm_pane_right()
+    local output = vim.fn.system({"wezterm", "cli", "get-pane-direction", self.config.relative_direction})
     output = vim.trim(output)
     if output == "" then
-        error("No right Wezterm pane detected")
+        error("No " .. self.config.relative_direction .. " Wezterm pane detected")
     end
     return output
 end
 
 function M:target_pane(opts)
     if self.current_pane_id == nil or opts.reload then
-        self.current_pane_id = wezterm_pane_right()
+        self.current_pane_id = self:wezterm_pane_right()
     else
         return self.current_pane_id
     end

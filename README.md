@@ -11,15 +11,16 @@ require("packer").startup(function()
   use({
     "paytonward6/nvim-wezlime",
     config = function()
-      require("wezlime").setup()
+      require("wezlime").setup({
+        -- default mappings
+        relative_direction = "right"
+      })
     end,
   })
 end)
 ```
 
-## Usage
-
-> Currently only supports a right pane as a target
+## Configuration
 
 ### Commands
 

@@ -41,8 +41,10 @@ M.wezlime = function(context)
     end
 end
 
-M.setup = function()
+M.setup = function(opts)
     vim.api.nvim_create_user_command("Wezlime", M.wezlime, {nargs = 1, range = true})
+
+    wezterm:setup(opts)
 end
 
 return M
