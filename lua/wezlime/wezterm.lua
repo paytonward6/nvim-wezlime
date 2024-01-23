@@ -24,7 +24,7 @@ function M:setup(opts)
 end
 
 function M:get_pane()
-    vim.print(self.current_pane_id)
+    return self.current_pane_id
 end
 
 local wezterm_list_clients = function()
@@ -33,7 +33,7 @@ local wezterm_list_clients = function()
     return json
 end
 
-function M:wezterm_pane_right()
+function M:wezterm_pane()
     local output = vim.fn.system({"wezterm", "cli", "get-pane-direction", self.config.relative_direction})
     output = vim.trim(output)
     if output == "" then
@@ -44,15 +44,25 @@ end
 
 function M:target_pane(opts)
     if self.current_pane_id == nil or opts.reload then
-        self.current_pane_id = self:wezterm_pane_right()
+        self.current_pane_id = self:wezterm_pane()
     else
         return self.current_pane_id
     end
 end
 
+function M:set_pane(id)
+    local pane_id = tonumber(id)
+    if pane_id then
+        self.current_pane_id = pane_id
+    else
+        error("Wezterm pane ID must be a number")
+    end
+end
+
 M.send_text = function(pane_id, text)
     local command = {"wezterm", "cli", "send-text", "--pane-id", pane_id}
-    vim.fn.system(command, text)
+    local out = vim.fn.system(command, text)
+    return out
 end
 
 function M:send(lines)

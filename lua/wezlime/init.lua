@@ -12,14 +12,17 @@ local wezlime_send = function(context)
     end
 
     if text ~= nil then
+        if not wezterm:get_pane() then
+            wezterm:reload_pane()
+        end
+
         wezterm:send(text)
-        if vim.v.shell_error == 2 then
-            -- 2 means no pane has such ID
-            -- reload and try again...
+        if vim.v.shell_error == 1 then
+            -- 1 means no pane has such ID reload and try again...
             wezterm:reload_pane()
             wezterm:send(text)
         elseif vim.v.shell_error > 0 then
-            error("Error writing text to Wezterm pane " .. M.current_pane_id)
+            error("Error writing text to Wezterm pane " .. wezterm.current_pane_id)
         end
     else
         vim.print("No text to send to pane")
@@ -37,12 +40,21 @@ M.wezlime = function(context)
     elseif args[1] == "reload_pane" then
         wezterm:reload_pane()
     elseif args[1] == "get_pane" then
-        wezterm:get_pane()
+        vim.print(wezterm:get_pane())
+    elseif args[1] == "set_pane" then
+        wezterm:set_pane(args[2])
     end
 end
 
 M.setup = function(opts)
-    vim.api.nvim_create_user_command("Wezlime", M.wezlime, {nargs = 1, range = true})
+    local commands = {"send", "reload_pane", "get_pane", "set_pane"}
+    vim.api.nvim_create_user_command("Wezlime", M.wezlime, {
+        nargs = "+",
+        range = true,
+        complete = function(line)
+            return vim.tbl_filter(function(val) return vim.startswith(val, line) end, commands)
+        end,
+    })
 
     wezterm:setup(opts)
 end
