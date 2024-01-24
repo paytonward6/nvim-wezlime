@@ -25,8 +25,8 @@ function M:setup(opts)
 
 end
 
-function M:get_pane()
-    return self.current_pane_id
+function M.get_pane(_, _)
+    return M.current_pane_id
 end
 
 local wezterm_list_clients = function()
@@ -51,14 +51,15 @@ function M:target_pane(opts)
     return self.current_pane_id
 end
 
-function M:set_pane(id)
+function M.set_pane(args, _)
+    local id = args[2]
     local pane_id = tonumber(id)
     if pane_id then
-        self.current_pane_id = pane_id
+        M.current_pane_id = pane_id
     else
         error("Wezterm pane ID must be a number")
     end
-    return self.current_pane_id
+    return M.current_pane_id
 end
 
 M.send_text = function(pane_id, text)
@@ -73,21 +74,21 @@ function M:send_lines(lines)
     self.send_text(pane_id, text)
 end
 
-function M:send_line()
+function M.send_line(_)
     local text = vim.api.nvim_get_current_line() .. "\n"
-    local pane_id = self:target_pane({reload = false})
+    local pane_id = M:target_pane({reload = false})
 
-    self.send_text(pane_id, text)
+    M.send_text(pane_id, text)
     if vim.v.shell_error == 1 then
         -- 1 means no pane has such ID reload and try again...
-        self:reload_pane()
-        self.send_text(pane_id, text)
+        M:reload_pane()
+        M.send_text(pane_id, text)
     elseif vim.v.shell_error > 0 then
-        error("Error writing text to Wezterm pane " .. self.current_pane_id)
+        error("Error writing text to Wezterm pane " .. M.current_pane_id)
     end
 end
 
-function M:send(context)
+function M.send(_, context)
     local text = nil
     if context.range == 0 then
         text = block.get_cur_block()
@@ -96,25 +97,25 @@ function M:send(context)
     end
 
     if text ~= nil then
-        if not self:get_pane() then
-            self:reload_pane()
+        if not M:get_pane() then
+            M:reload_pane()
         end
 
-        self:send_lines(text)
+        M:send_lines(text)
         if vim.v.shell_error == 1 then
             -- 1 means no pane has such ID reload and try again...
-            self:reload_pane()
-            self:send_lines(text)
+            M:reload_pane()
+            M:send_lines(text)
         elseif vim.v.shell_error > 0 then
-            error("Error writing text to Wezterm pane " .. self.current_pane_id)
+            error("Error writing text to Wezterm pane " .. M.current_pane_id)
         end
     else
         vim.print("No text to send to pane")
     end
 end
 
-function M:reload_pane()
-    return self:target_pane({reload = true})
+function M.reload_pane(_, _)
+    return M:target_pane({reload = true})
 end
 
 local current_pane_id = function()
